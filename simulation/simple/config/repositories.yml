@@ -1,0 +1,22 @@
+---
+repositories:
+  general:
+    pool_size: 8
+    # validation_interval: 15 # sec
+    # reconnect_interval: 1 # sec
+    # enable_sql_log: true
+  ops_repository:
+    database: ops
+    database_url: mysql2://root:root@opsdb/ops
+    # validation_interval: 15 # sec
+    # reconnect_interval: 1 # sec
+    # pool_size: 4
+    # enable_sql_log: true
+  hms_repository:
+    database: hms
+    database_url: mysql2://root:root@hmsdb/hms
+    # validation_interval: 15 # sec
+    # reconnect_interval: 1 # sec
+    # pool_size: 4
+    # enable_sql_log: true   
+

@@ -1,0 +1,33 @@
+version: "3"
+
+services:
+  chronos:
+    image: ruby:2.5.1
+    volumes:
+      - ../simple:/app
+    depends_on:
+      - opsdb
+      - hmsdb
+    entrypoint: /bin/sh
+    stdin_open: true
+    tty: true
+  opsdb:
+    image: mysql:5.7
+    environment: 
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ops
+    volumes:
+      - chronos2_sim_opsdb:/var/lib/mysql
+  hmsdb:
+    image: mysql:5.7
+    environment: 
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: hms
+    volumes:
+      - chronos2_sim_hmsdb:/var/lib/mysql
+    depends_on:
+      - opsdb
+
+volumes:
+  chronos2_sim_opsdb:
+  chronos2_sim_hmsdb:

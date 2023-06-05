@@ -1,0 +1,166 @@
+---
+jobs:
+  archive:
+    general:
+      worker: archive_interactor
+      # auto_start: false
+      # start_after: 5s
+      # wait: 5s
+      batches: 4
+      batch_size: 200
+      # primary_key: id
+      primary_key_uuid: true
+    jobs:
+      - id: 01CJ1WT49FKK2PAWY1SH7A3Q8P
+        # name: archive
+        # auto_start: true
+        # start_after: 5s
+        # wait: 5s
+        # batches: 4
+        # batch_size: 200
+        # trace_cycle: 30s
+        trace_attr: updated_at
+        from: ops.player_sessions
+        to: hms.player_session_info
+        # primary_key: id
+        # primary_key_uuid: false
+        # select_attrs: [ col1 col2 col3 ]
+        # reject_attrs: [ col4 ]
+        # rename_attrs: { col1: col_1 }
+        # filter: |
+        #   # dataset.where{ created_at > Time.now  }
+        #   dataset.where(data: ["test1", "test2"])
+        # transform: |
+        #   unless row[:data].nil?
+        #     data = YAML.load(row[:data])
+        #     machine_token = data[:machine_token].split("|")
+        #     row[:machine_id] = machine_token[5].to_i
+        #   end
+      - id: 01CJ9HAHY0H5XJW7MSPC0PAS2X
+        # name: archive
+        # auto_start: false
+        # start_after: 5s
+        # wait: 5s
+        # batches: 4
+        # batch_size: 200
+        # trace_cycle: 30s
+        trace_attr: updated_at
+        from: ops.player_game_sessions
+        to: hms
+        # primary_key: id
+        # primary_key_uuid: false
+        # select_attrs: [ col1 col2 col3 ]
+        # reject_attrs: [ col4 ]
+        rename_attrs: { player_session_id: player_session_info_id }
+      - id: 01CK3886QQNV943KQAJG491ZV2
+        # name: archive
+        # auto_start: true
+        # start_after: 5s
+        # wait: 5s
+        # batches: 4
+        # batch_size: 200
+        # trace_cycle: 30s
+        trace_attr: updated_at
+        from: ops.player_sessions
+        to: hms.player_session_snapshots
+        # primary_key: id
+        # primary_key_uuid: false
+        snapshot_interval: 60 # mins
+        snapshot_coverage: 6 # snapshot_coverage * snapshot_interval (mins)
+        snapshot_wait: 15 # seconds
+        filter: |
+          now = Time.now
+          wait = job[:snapshot_wait]
+          interval = job[:snapshot_interval] * 60
+          coverage = job[:snapshot_coverage] * interval
+          start_time = Time.at(((now - wait - coverage).to_f / interval).floor * interval)
+          end_time = Time.at(((now.to_f - wait) / interval).floor * interval)
+          dataset
+            .select_more(Sequel.function(:left, job[:trace_attr], 13).as(:snapshot_id))
+            .where(Sequel[job[:from_target].to_sym][job[:primary_key]] => 
+                   dataset
+                    .select(Sequel.function(:max, job[:primary_key]))
+                    .where { |o| 
+                      (o.__send__(job[:trace_attr]) >= start_time) &
+                      (o.__send__(job[:trace_attr]) < end_time) }
+                    .group(Sequel.function(:left, job[:trace_attr], 13)))
+  purge:
+    general:
+      worker: purge_interactor
+      # auto_start: false
+      # start_after: 5s
+      # wait: 5s
+      batches: 4
+      batch_size: 200
+      # primary_key: id
+      primary_key_uuid: true
+      retention_period: "1h"
+    jobs:
+      - id: 01CJ41Y635F2P4NRHXHX2TMNZV
+        # name: purge
+        # auto_start: true
+        # start_after: 5s
+        # wait: 5s
+        # batches: 4
+        # batch_size: 200
+        # trace_cycle: 30s
+        from: ops.player_sessions
+        # primary_key: id
+        # primary_key_uuid: false
+        # purge_attr: updated_at
+        dependents:
+          player_game_sessions:
+        # foreign_key: player_session_id
+      - id: 01CJK3JBCX8VKA6SSETFJ2QWZ4
+        # name: purge
+        # auto_start: true
+        # start_after: 5s
+        # wait: 5s
+        # batches: 4
+        # batch_size: 200
+        # trace_cycle: 30s
+        from: ops.player_game_sessions
+        # primary_key: id
+        # primary_key_uuid: false
+        # purge_attr: updated_at
+  simulate:
+    general:
+      worker: simulate_interactor
+      # auto_start: false
+      # start_after: 5s
+      # wait: 5s
+      batches: 4
+      batch_size: 100
+    jobs:
+      - id: 01CJ1RP28FHV55XW4NGBYHX8MG
+        # name: simulate
+        # auto_start: true
+        # start_after: 5s
+        # wait: 5s
+        # batches: 4
+        # batch_size: 100
+        from: ops.player_sessions
+      - id: 01CJ8TPX2GYTRJA5MR40WQNGEG
+        # name: simulate
+        # auto_start: false
+        start_after: 5s
+        # wait: 5s
+        # batches: 4
+        # batch_size: 100
+        from: ops.player_game_sessions
+  monitor:
+    general:
+      worker: monitor_interactor
+      # auto_start: false
+      # start_after: 5s
+    jobs:
+      - id: 01CK7K1AHQ78DW235EV1S8KDRV
+        trace_type: archive
+        trace_from: "hms"
+        every: "5m"
+        abnormal_latency: "10m"
+      - id: 01CK8CK545JDX3X1JTMHXAVKW4
+        trace_type: purge
+        trace_from: "ops"
+        every: "5m"
+        abnormal_latency: "10m"

@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+# frozen-string-literal: true
+require "bundler/setup"
+require "citrine"
+lib = File.expand_path("../../lib", __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+require "chronos2"
+
+Citrine.run_cli(Chronos2) do |opts|
+  opts[:init_config_files] = [ File.expand_path("../../config/interactors.yml", __FILE__) ]
+end
