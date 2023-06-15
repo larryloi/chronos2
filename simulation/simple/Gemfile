@@ -1,10 +1,6 @@
 source "https://rubygems.org"
 
-git_source(:stash) do |repo_name|
-  "http://stash.mo.laxino.com/scm/#{repo_name}.git"
-end
-
-gem "citrine", stash: "i2/citrine", tag: "v0.1.7"
-gem "chronos2", stash: "chronos2/chronos2", tag: "v0.1.13.2"
+gem 'citrine', git: 'git@github.com:larryloi/citrine.git', tag: "0.3.11"
+gem 'chronos2', git: 'git@github.com:larryloi/chronos2.git', tag: "0.2.0"
 
 gem 'mysql2', '>= 0.5.1'
