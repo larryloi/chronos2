@@ -2,9 +2,9 @@
 Sequel.migration do
   up do
     create_table :chronos_archive_transactions do
-      String :id, primary_key: true
-      String :archive_job_id, null: false
-      String :target_uuid
+      String :id, primary_key: true, size: 45
+      String :archive_job_id, null: false, size: 45
+      String :target_uuid, size: 45
       Bignum :target_id
       DateTime :traced_at, null: false
       DateTime :opened_at, null: false

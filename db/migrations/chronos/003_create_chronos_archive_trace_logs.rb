@@ -2,10 +2,10 @@
 Sequel.migration do
   up do
     create_table :chronos_trace_logs do
-      String :id, primary_key: true
-      String :job_id, null: false
-      String :target, null: false
-      String :type, null: false
+      String :id, primary_key: true, size: 45
+      String :job_id, null: false, size: 45
+      String :target, null: false, size: 45
+      String :type, null: false, size: 45
       DateTime :synced_at, null: false
       DateTime :traced_at, null: false
       DateTime :created_at, null: false

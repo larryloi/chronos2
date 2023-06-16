@@ -2,9 +2,9 @@
 Sequel.migration do
   up do
     create_table :chronos_traces do
-      String :job_id, primary_key: true
-      String :target, null: false
-      String :type, null: false
+      String :job_id, primary_key: true, size: 45
+      String :target, null: false, size: 45
+      String :type, null: false, size: 45
       column :synced_at, "datetime(6)", null: false
       column :traced_at, "datetime(6)", null: false
       column :created_at, "datetime(6)", null: false
